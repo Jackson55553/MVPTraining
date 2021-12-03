@@ -1,14 +1,16 @@
 package com.example.mvptraining
 
-class MainPresenter(val view: MainView) {
-    val model = CountersModel()
+import androidx.fragment.app.FragmentManager
+import com.github.terrakok.cicerone.Router
+import com.github.terrakok.cicerone.Screen
+import moxy.MvpPresenter
 
-    fun counterClick(type: CounterType){
-       val dataFromModel = when(type){
-            CounterType.FIRST -> model.next(0)
-            CounterType.SECOND -> model.next(1)
-            CounterType.THIRD -> model.next(2)
-        }
-        view.setButtonText(type, dataFromModel.toString())
+class MainPresenter(val router: Router, val screen: IScreens) : MvpPresenter<MainView>() {
+    override fun onFirstViewAttach() {
+        super.onFirstViewAttach()
+        router.replaceScreen(screen.users())
+    }
+    fun backClicked(){
+        router.exit()
     }
 }

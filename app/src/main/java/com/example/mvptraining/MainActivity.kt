@@ -1,43 +1,41 @@
 package com.example.mvptraining
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
-import android.widget.Toast
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mvptraining.databinding.ActivityMainBinding
-import java.lang.IllegalStateException
+import com.github.terrakok.cicerone.androidx.AppNavigator
+import moxy.MvpAppCompatActivity
+import moxy.ktx.moxyPresenter
 
-class MainActivity : AppCompatActivity(), MainView {
+class MainActivity : MvpAppCompatActivity(), MainView {
 
-    private lateinit var binding: ActivityMainBinding
-    val presenter = MainPresenter(this)
+    val navigator = AppNavigator(this, R.id.container)
+
+    private val presenter by moxyPresenter { MainPresenter(App.instance.router, AndroidScreens()) }
+    private var vb: ActivityMainBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        val listener = View.OnClickListener {
-            val type = when(it.id){
-                R.id.btn_counter1 -> CounterType.FIRST
-                R.id.btn_counter2 -> CounterType.SECOND
-                R.id.btn_counter3 -> CounterType.THIRD
-                else -> throw IllegalStateException("такой кнопки нет")
-            }
-            presenter.counterClick(type)
-        }
-
-        binding.btnCounter1.setOnClickListener(listener)
-        binding.btnCounter2.setOnClickListener(listener)
-        binding.btnCounter3.setOnClickListener(listener)
+        vb = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(vb?.root)
     }
 
-    
-    override fun setButtonText(type: CounterType, text: String) {
-        when(type){
-            CounterType.FIRST -> binding.btnCounter1.text = text
-            CounterType.SECOND -> binding.btnCounter2.text = text
-            CounterType.THIRD -> binding.btnCounter3.text = text
+    override fun onResumeFragments() {
+        super.onResumeFragments()
+        App.instance.navigatorHolder.setNavigator(navigator)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        App.instance.navigatorHolder.removeNavigator()
+    }
+
+    override fun onBackPressed() {
+        supportFragmentManager.fragments.forEach {
+            if(it is BackButtonListener && it.backClicked()){
+                return
+            }
         }
+        presenter.backClicked()
     }
 }
